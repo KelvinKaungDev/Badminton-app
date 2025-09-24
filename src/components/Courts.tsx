@@ -1,9 +1,29 @@
 import React, { useState, useEffect } from "react";
+import type { ChangeEvent, FormEvent } from "react";
 import API from "../api";
 
-function Courts() {
-  const [courts, setCourts] = useState([]);
-  const [form, setForm] = useState({
+// ✅ Define the Court interface
+interface Court {
+  _id: string;
+  courtNo: string;
+  pricePerHour: number;
+  fromHour: string;
+  toHour: string;
+  image: string;
+}
+
+// ✅ Form state type
+interface CourtForm {
+  courtNo: string;
+  pricePerHour: number;
+  fromHour: string;
+  toHour: string;
+  image: string;
+}
+
+const Courts: React.FC = () => {
+  const [courts, setCourts] = useState<Court[]>([]);
+  const [form, setForm] = useState<CourtForm>({
     courtNo: "",
     pricePerHour: 500,
     fromHour: "",
@@ -13,21 +33,22 @@ function Courts() {
 
   // 🔹 Fetch courts from backend
   useEffect(() => {
-    API.get("/courts")
+    API.get<Court[]>("/courts")
       .then((res) => setCourts(res.data))
       .catch((err) => console.error("Failed to fetch courts:", err));
   }, []);
 
   // 🔹 Handle input change
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setForm({ ...form, [name]: name === "pricePerHour" ? Number(value) : value });
   };
 
   // 🔹 Submit new court
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     try {
-      const res = await API.post("/courts", form);
+      const res = await API.post<Court>("/courts", form);
       setCourts([...courts, res.data]); // add new court to list
       setForm({ courtNo: "", pricePerHour: 500, fromHour: "", toHour: "", image: "" });
     } catch (err) {
@@ -85,17 +106,17 @@ function Courts() {
       {/* Courts List */}
       <ul>
         {courts.map((court) => (
-          <li key={court._id}>
+          <li key={court._id} style={{ marginBottom: "20px" }}>
             <strong>{court.courtNo}</strong> — {court.pricePerHour} MMK/hour
             <br />
             Available: {court.fromHour} to {court.toHour}
             <br />
-            <img src={court.image} alt={court.courtNo} width="200" />
+            <img src={court.image} alt={court.courtNo} width={200} />
           </li>
         ))}
       </ul>
     </div>
   );
-}
+};
 
 export default Courts;
